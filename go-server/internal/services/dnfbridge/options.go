@@ -173,14 +173,17 @@ type options struct {
 	maxPacketBytes           int
 	packetLogEnabled         bool
 	goldDiagnosticCharID     int
-	packetLogPath            string
-	accountID                string
-	accountPrefix            string
-	pvfPath                  string
-	pvfMaxBytes              int64
-	partyUDPRelayEnabled     bool
-	partyUDPRelayPortStart   int
-	partyUDPRelayPortCount   int
+	// onlineCeraPerMinute 是每个在线角色每分钟发放的点券数量。
+	// 0（默认）表示关闭，未配置的部署行为与上游一致。
+	onlineCeraPerMinute    int
+	packetLogPath          string
+	accountID              string
+	accountPrefix          string
+	pvfPath                string
+	pvfMaxBytes            int64
+	partyUDPRelayEnabled   bool
+	partyUDPRelayPortStart int
+	partyUDPRelayPortCount int
 	// joustEventDisabled 是 DNFBRIDGE_JOUST_EVENT_ENABLED 的取反存储
 	// （默认 false = 骑士马战大竞猜事件保持开启）。取反存放是刻意的：options
 	// 的零值必须保持"事件开启"，这样所有不经过 optionsFromConfig 的构造路径
@@ -817,6 +820,7 @@ func optionsFromConfig(cfg config.ServiceConfig) options {
 		maxPacketBytes:         envInt("DNF_MAX_PACKET_BYTES", defaultMaxPacketBytes),
 		packetLogEnabled:       envBool("DNFBRIDGE_PACKET_LOG", false),
 		goldDiagnosticCharID:   envInt("DNFBRIDGE_GOLD_DIAGNOSTIC_CHARACTER", 0),
+		onlineCeraPerMinute:    envInt("DNFBRIDGE_ONLINE_CERA_PER_MINUTE", 0),
 		packetLogPath:          envString("DNFBRIDGE_PACKET_LOG_PATH", "logs/packet_log.txt"),
 		accountID:              envString("DNFBRIDGE_ACCOUNT_ID", ""),
 		accountPrefix:          envString("DNFBRIDGE_ACCOUNT_PREFIX", defaultAccountPrefix),

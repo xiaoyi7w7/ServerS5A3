@@ -500,6 +500,9 @@ func (s *Service) Start(ctx context.Context) error {
 	s.startCurrentRaidClock(runCtx)
 	s.startCurrentTagTournamentClock(runCtx)
 	s.startCurrentLevelUpRewardClock(runCtx)
+	// 在线角色每分钟发放点券：**默认关闭**（金额 0 直接 return，零副作用）。
+	// 本服定制功能，见 online_cera_award.go。
+	s.startOnlineCeraAward(runCtx)
 	// 强制组队测试触发器：**默认 off**（off 档直接 return，零副作用）。
 	// 见 party_force_trigger.go。
 	s.startPartyForceTrigger(runCtx)
