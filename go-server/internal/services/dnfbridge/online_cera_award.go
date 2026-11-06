@@ -2,7 +2,6 @@ package dnfbridge
 
 import (
 	"context"
-	"strings"
 	"time"
 
 	dnfcerashop "longheng.io/server/internal/modules/dnf/cerashop"
@@ -38,18 +37,7 @@ func (s *Service) startOnlineCeraAward(ctx context.Context) {
 	}()
 }
 
-// onlineCeraTarget 是一次结算周期内要发放的在线角色快照。
-// 快照在 s.mu 内取，真正写库和推送在锁外做，避免慢 IO 占住会话表。
-type onlineCeraTarget struct {
-	session   *gameSession
-	identity  boundGameSessionCharacter
-	accountID string
-}
-
-// awardOnlineCeraOnce 执行一次发放，返回实际入账的账号数。
-//
-// 点券是账号共享的（dnf_accounts.metadata_json["account_cera"]），
-// 所以同一账号下多个角色同时在线时只发一份，否则会按角色数翻倍。
+// awardOnlineCeraOnce 每分钟给在线角色的账号发放点券，返回实际入账账号数。
 func (s *Service) awardOnlineCeraOnce(ctx context.Context, amount int64) int {
 	if s == nil || amount <= 0 {
 		return 0
@@ -62,35 +50,8 @@ func (s *Service) awardOnlineCeraOnce(ctx context.Context, amount int64) int {
 		ctx = context.Background()
 	}
 
-	s.mu.Lock()
-	targets := make([]onlineCeraTarget, 0, len(s.gameSessions))
-	seenAccounts := make(map[string]struct{}, len(s.gameSessions))
-	for characterID, session := range s.gameSessions {
-		if session == nil || characterID == 0 {
-			continue
-		}
-		accountID := strings.TrimSpace(s.accountIDForSession(session))
-		if accountID == "" {
-			continue
-		}
-		if _, duplicate := seenAccounts[accountID]; duplicate {
-			continue
-		}
-		seenAccounts[accountID] = struct{}{}
-		targets = append(targets, onlineCeraTarget{
-			session: session,
-			identity: boundGameSessionCharacter{
-				session:    session,
-				character:  characterID,
-				generation: session.characterGeneration,
-			},
-			accountID: accountID,
-		})
-	}
-	s.mu.Unlock()
-
 	awarded := 0
-	for _, target := range targets {
+	for _, target := range s.onlineAccountTargets() {
 		entry := target
 		if _, found, err := dnfcerashop.CreditBalance(ctx, repositories.Account, entry.accountID, amount); err != nil || !found {
 			// 单个账号失败不影响其他在线角色；下个周期会自然重试。

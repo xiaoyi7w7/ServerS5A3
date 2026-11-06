@@ -503,6 +503,9 @@ func (s *Service) Start(ctx context.Context) error {
 	// 在线角色每分钟发放点券：**默认关闭**（金额 0 直接 return，零副作用）。
 	// 本服定制功能，见 online_cera_award.go。
 	s.startOnlineCeraAward(runCtx)
+	// 限时注册赠送点券：**默认关闭**，金额/日期窗口任一不合法就整项停用。
+	// 本服定制功能，见 registration_cera_bonus.go。
+	s.startRegistrationCeraBonus(runCtx)
 	// 强制组队测试触发器：**默认 off**（off 档直接 return，零副作用）。
 	// 见 party_force_trigger.go。
 	s.startPartyForceTrigger(runCtx)
