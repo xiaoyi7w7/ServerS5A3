@@ -94,6 +94,10 @@ func (s *Service) awardOnlineCeraOnce(ctx context.Context, amount int64) int {
 		entry := target
 		if _, found, err := dnfcerashop.CreditBalance(ctx, repositories.Account, entry.accountID, amount); err != nil || !found {
 			// 单个账号失败不影响其他在线角色；下个周期会自然重试。
+			// 但要留下证据，否则线上只能看到"余额不动"而没有任何线索。
+			if err != nil {
+				s.logWarn("online cera award failed", "account_id", entry.accountID, "error", err)
+			}
 			continue
 		}
 		awarded++
@@ -113,6 +117,9 @@ func (s *Service) awardOnlineCeraOnce(ctx context.Context, amount int64) int {
 				return s.sendCurrentAccountWallet(entry.session)
 			},
 		)
+	}
+	if awarded > 0 {
+		s.logInfo("online cera awarded", "accounts", awarded, "amount_each", amount)
 	}
 	return awarded
 }
