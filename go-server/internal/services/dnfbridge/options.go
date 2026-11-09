@@ -180,11 +180,6 @@ type options struct {
 	registrationCeraAmount int
 	registrationCeraFrom   string
 	registrationCeraTo     string
-	// dungeonMinClearSeconds 是副本通关时长的下限（秒）。0（默认）表示不拦截；
-	// > 0 时通关时长低于该值的结算会被中止并断开连接，详见
-	// dungeon_clear_time_guard.go。零值必须保持"不拦截"，测试与探针的字面量
-	// 构造路径才与加开关前逐字节一致。
-	dungeonMinClearSeconds int
 	packetLogPath          string
 	accountID              string
 	accountPrefix          string
@@ -836,7 +831,6 @@ func optionsFromConfig(cfg config.ServiceConfig) options {
 		registrationCeraAmount: envInt("DNFBRIDGE_REGISTRATION_CERA_AMOUNT", 0),
 		registrationCeraFrom:   envString("DNFBRIDGE_REGISTRATION_CERA_FROM", ""),
 		registrationCeraTo:     envString("DNFBRIDGE_REGISTRATION_CERA_TO", ""),
-		dungeonMinClearSeconds: envInt("DNFBRIDGE_DUNGEON_MIN_CLEAR_SECONDS", 0),
 		packetLogPath:          envString("DNFBRIDGE_PACKET_LOG_PATH", "logs/packet_log.txt"),
 		accountID:              envString("DNFBRIDGE_ACCOUNT_ID", ""),
 		accountPrefix:          envString("DNFBRIDGE_ACCOUNT_PREFIX", defaultAccountPrefix),

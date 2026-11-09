@@ -165,12 +165,6 @@ func (s *Service) produceCurrentDungeonSettlementPlanWithResourcesLocked(
 	if err != nil {
 		return err
 	}
-	// 通关时长下限：低于 DNFBRIDGE_DUNGEON_MIN_CLEAR_SECONDS 的结算在这里中止，
-	// 此时奖励尚未落库（下面才调用 commitCurrentDungeonSettlementWithPotion）。
-	// 命中会关闭连接并返回 errCurrentDungeonClearTimeTooShort。
-	if err := s.enforceCurrentDungeonClearTimeGuardLocked(session, runtime); err != nil {
-		return err
-	}
 	// rank grade顺序为SSS/SS/S等；使用本次已冻结op46评分与当前PVF，拒绝写死分数。
 	runtime.battlePassSRankClear = len(resources.ClearRankCatalog.gradeThresholds) >= 3 && clientRankPoint >= resources.ClearRankCatalog.gradeThresholds[2]
 	result, err := s.commitCurrentDungeonSettlementWithPotion(
