@@ -511,6 +511,13 @@ func (s *Service) Start(ctx context.Context) error {
 	// 限时注册赠送点券：**默认关闭**，金额/日期窗口任一不合法就整项停用。
 	// 本服定制功能，见 registration_cera_bonus.go。
 	s.startRegistrationCeraBonus(runCtx)
+	// 副本通关时长下限：**默认关闭**（阈值 0 直接跳过判定）。开启后结算前拦截速通，
+	// 见 dungeon_clear_time_guard.go。
+	if s.options.dungeonMinClearSeconds > 0 {
+		s.logInfo("dnfbridge dungeon clear time guard enabled",
+			"min_seconds", s.options.dungeonMinClearSeconds,
+			"effect", "settlement aborted and session closed below threshold")
+	}
 	// 强制组队测试触发器：**默认 off**（off 档直接 return，零副作用）。
 	// 见 party_force_trigger.go。
 	s.startPartyForceTrigger(runCtx)

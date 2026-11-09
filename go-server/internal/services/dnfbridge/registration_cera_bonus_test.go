@@ -63,10 +63,18 @@ func registrationCeraAlwaysEligible(context.Context, string, time.Time, time.Tim
 	return true, nil
 }
 
+// registrationCeraLiveWindow 返回一个"当前有效"的发放窗口。
+// 发放函数用 time.Now() 判定窗口是否结束，如果把日期写死成具体某两天，
+// 用例会随真实时间推移自动失效（2026-11-09 起 11-06..11-07 的窗口已过期）。
+func registrationCeraLiveWindow() (time.Time, time.Time) {
+	now := time.Now()
+	return now.Add(-time.Hour), now.Add(time.Hour)
+}
+
 func TestRegistrationCeraGrantsOnceAndKeepsReceipt(t *testing.T) {
 	ctx := context.Background()
 	service, group := registrationCeraFixture(t, 19)
-	start, end, _ := registrationCeraWindow("2026-11-06", "2026-11-07")
+	start, end := registrationCeraLiveWindow()
 
 	if got := service.grantRegistrationCeraOnce(ctx, 20000, start, end, registrationCeraAlwaysEligible); got != 1 {
 		t.Fatalf("首次发放账号数 = %d, want 1", got)
@@ -93,7 +101,7 @@ func TestRegistrationCeraGrantsOnceAndKeepsReceipt(t *testing.T) {
 func TestRegistrationCeraSkipsIneligibleAccounts(t *testing.T) {
 	ctx := context.Background()
 	service, group := registrationCeraFixture(t, 19)
-	start, end, _ := registrationCeraWindow("2026-11-06", "2026-11-07")
+	start, end := registrationCeraLiveWindow()
 	never := func(context.Context, string, time.Time, time.Time) (bool, error) { return false, nil }
 
 	if got := service.grantRegistrationCeraOnce(ctx, 20000, start, end, never); got != 0 {
@@ -108,7 +116,7 @@ func TestRegistrationCeraSkipsIneligibleAccounts(t *testing.T) {
 func TestRegistrationCeraDedupesMultipleCharacters(t *testing.T) {
 	ctx := context.Background()
 	service, group := registrationCeraFixture(t, 19, 20)
-	start, end, _ := registrationCeraWindow("2026-11-06", "2026-11-07")
+	start, end := registrationCeraLiveWindow()
 
 	if got := service.grantRegistrationCeraOnce(ctx, 20000, start, end, registrationCeraAlwaysEligible); got != 1 {
 		t.Fatalf("同账号两角色应只发一份, got %d", got)
