@@ -87,8 +87,12 @@ func TestCombinedFiendWarDirectChannelNoExitLoginAndSelection(t *testing.T) {
 					if len(packet.Body) < 4 || packet.Body[3] != 45 {
 						t.Fatalf("client login type=%d, want 45; body=%x", packet.Body[3], packet.Body)
 					}
-					ipLen := int(binary.LittleEndian.Uint32(packet.Body[9:13]))
-					portAt := 13 + ipLen
+					// official-24.9 档位不写服务器 IP 的 DSTR，端口紧跟 token；
+					// 其余档位端口按 DSTR 长度顺延。
+					portAt := 9
+					if s.options.currentClientVersion != "official-24.9" {
+						portAt = 13 + int(binary.LittleEndian.Uint32(packet.Body[9:13]))
+					}
 					if portAt+4 > len(packet.Body) || binary.LittleEndian.Uint32(packet.Body[portAt:portAt+4]) != uint32(channel.Port) {
 						t.Fatal("login endpoint does not use raw channel 261/262/263 port")
 					}

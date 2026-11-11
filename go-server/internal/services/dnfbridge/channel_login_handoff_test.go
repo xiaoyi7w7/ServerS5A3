@@ -54,8 +54,13 @@ func assertFirstChannelLoginSuccess(t *testing.T, s *Service, p *gameSession, ch
 			if len(packet.Body) < 16 || packet.Body[3] != wantType {
 				t.Fatalf("首次LOGIN类型不符：频道%d 正文%x", channel.ID, packet.Body)
 			}
-			ipLen := int(binary.LittleEndian.Uint32(packet.Body[9:13]))
-			portOffset := 13 + ipLen
+			// official-24.9 的原生接收端在 token 之后直接读端点字段，
+			// 因此 buildLoginSuccess 在该档位不写服务器 IP 的 DSTR：端口紧跟
+			// token（正文偏移 9）。其余档位仍写 IP，端口位置按 DSTR 长度顺延。
+			portOffset := 9
+			if s.options.currentClientVersion != "official-24.9" {
+				portOffset = 13 + int(binary.LittleEndian.Uint32(packet.Body[9:13]))
+			}
 			if portOffset+4 > len(packet.Body) || binary.LittleEndian.Uint32(packet.Body[portOffset:portOffset+4]) != uint32(channel.Port) {
 				t.Fatal("首次LOGIN没有采用同一目标频道的端口")
 			}

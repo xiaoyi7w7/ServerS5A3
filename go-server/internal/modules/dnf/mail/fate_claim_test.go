@@ -17,7 +17,10 @@ import (
 )
 
 func fateClaimTestNow() time.Time {
-	return time.Date(2026, time.October, 27, 2, 0, 0, 0, time.FixedZone("CST", 8*60*60))
+	// 用当前时间而非写死日期：邮件带有保留期，写死 2026-10-27 之后一旦超过
+	// 保留天数就必须判为「已过期」，用例会随真实日期推移恒失败（上游
+	// 6ab71b72 在 2026-11-11 起即如此）。保留 CST 时区以维持原断言口径。
+	return time.Now().In(time.FixedZone("CST", 8*60*60))
 }
 
 func fateClaimTestIDs(t *testing.T, ctx context.Context, owner Owner, mailID string) []uint32 {
